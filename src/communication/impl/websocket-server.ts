@@ -20,6 +20,9 @@ export class WebsocketServer implements Publisher, Subscriber {
    */
   initialize(io: Server) {
     this.io = io;
+    this.io.on('connection', (socket) => {
+      this.logger.info(`Client ${socket.id} connected to websocket server!`);
+    });
   }
 
   /**

@@ -1,7 +1,9 @@
 import { inject, injectable } from 'inversify';
 import express, { Express } from 'express';
+import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+
 import { WebsocketServer } from './communication/impl/websocket-server';
 import config from './config';
 import { Logger } from './config/logger';
@@ -24,6 +26,10 @@ export class App {
    * Initialize the server
    */
   async initialize() {
+    this.app.use(cors({
+      credentials: true
+    }));
+
     const http = createServer(this.app);
     const io = new Server(http);
 
