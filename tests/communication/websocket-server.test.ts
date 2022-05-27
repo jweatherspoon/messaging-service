@@ -1,7 +1,6 @@
 import { describe } from 'mocha';
-import Sinon, { assert, SinonSpy, SinonStub, spy, stub } from 'sinon';
+import Sinon, { assert, SinonSpy, spy } from 'sinon';
 import { Server } from 'socket.io';
-import { expect } from 'chai';
 import { WebsocketServer } from '../../src/communication/impl/websocket-server';
 import { Callback } from '../../src/communication/interfaces/subscriber';
 
@@ -23,7 +22,7 @@ describe('Websocket Server tests', () => {
     let onSpy: SinonSpy;
 
     beforeEach(() => {
-      onSpy = stub(io, 'on');
+      onSpy = spy(io, 'on');
     });
 
     it('should add a subscription', async () => {
@@ -52,86 +51,104 @@ describe('Websocket Server tests', () => {
       assert.callCount(onSpy, 1);
       assert.calledWith(onSpy, channel, callback);
     });
+  });
 
-    describe('unsubscribe', () => {
-      const channel = 'test';
-      let removeListenerSpy: SinonSpy;
+  describe('unsubscribe', () => {
+    const channel = 'test';
+    let removeListenerSpy: SinonSpy;
 
-      beforeEach(() => {
-        removeListenerSpy = spy(io, 'removeListener');
-        ws.subscribe(channel, () => {});
-      });
+    beforeEach(() => {
+      removeListenerSpy = spy(io, 'removeListener');
+      ws.subscribe(channel, () => { });
+    });
 
-      it('should unsubscribe', async () => {
-        // act
-        await ws.unsubscribe(channel);
+    it('should unsubscribe', async () => {
+      // act
+      await ws.unsubscribe(channel);
 
-        // assert
-        assert.callCount(removeListenerSpy, 1);
+      // assert
+      assert.callCount(removeListenerSpy, 1);
+      assert.calledWith(removeListenerSpy, channel);
+    });
+
+    it('should do nothing if the subscription does not exist', async () => {
+      // act
+      await ws.unsubscribe('bingbong');
+
+      // assert
+      assert.callCount(removeListenerSpy, 0);
+    });
+
+    it('should remove the subscription internally', async () => {
+      // setup
+      await ws.unsubscribe(channel);
+      removeListenerSpy.resetHistory();
+
+      // act
+      await ws.unsubscribe(channel);
+
+      // assert
+      assert.callCount(removeListenerSpy, 0);
+    });
+  });
+
+  describe('unsubscribeAll', () => {
+    const channels: string[] = [];
+    let removeListenerSpy: SinonSpy;
+
+    beforeEach(() => {
+      removeListenerSpy = spy(io, 'removeListener');
+
+      channels.push('sub1', 'sub2', 'sub3');
+
+      for (const channel of channels) {
+        ws.subscribe(channel, () => { });
+      }
+    });
+
+    it('should unsubscribe from all subscriptions', async () => {
+      // act
+      await ws.unsubscribeAll();
+
+      // assert
+      assert.callCount(removeListenerSpy, channels.length);
+      for (const channel of channels) {
         assert.calledWith(removeListenerSpy, channel);
-      });
-
-      it('should do nothing if the subscription does not exist', async () => {
-        // act
-        await ws.unsubscribe('bingbong');
-
-        // assert
-        assert.callCount(removeListenerSpy, 0);
-      });
-
-      it('should remove the subscription internally', async () => {
-        // setup
-        await ws.unsubscribe(channel);
-        removeListenerSpy.resetHistory();
-
-        // act
-        await ws.unsubscribe(channel);
-
-        // assert
-        assert.callCount(removeListenerSpy, 0);
-      });
+      }
     });
 
-    describe('unsubscribeAll', () => {
-      const channels: string[] = [];
-      let removeListenerSpy: SinonSpy;
+    it('should remove all subscriptions internally', async () => {
+      // setup
+      await ws.unsubscribeAll();
+      removeListenerSpy.resetHistory();
 
-      beforeEach(() => {
-        removeListenerSpy = spy(io, 'removeListener');
+      // act
+      await ws.unsubscribeAll();
 
-        channels.push('sub1', 'sub2', 'sub3');
+      // assert
+      assert.callCount(removeListenerSpy, 0);
+    });
+  });
 
-        for (const channel of channels) {
-          ws.subscribe(channel, () => {});
-        }
-      });
+  describe('publish', () => {
+    let emitSpy: SinonSpy;
+    const channel = 'channel';
+    const data = { key: 'value' };
 
-      it('should unsubscribe from all subscriptions', async () => {
-        // act
-        await ws.unsubscribeAll();
-
-        // assert
-        assert.callCount(removeListenerSpy, channels.length);
-        for (const channel of channels) {
-          assert.calledWith(removeListenerSpy, channel);
-        }
-      });
-
-      it('should remove all subscriptions internally', async () => {
-        // setup
-        await ws.unsubscribeAll();
-        removeListenerSpy.resetHistory();
-
-        // act
-        await ws.unsubscribeAll();
-
-        // assert
-        assert.callCount(removeListenerSpy, 0);
-      });
+    beforeEach(() => {
+      emitSpy = spy(io, 'emit');
     });
 
-    describe('publish', () => {
-      it('should publish the message');
+    it('should publish the message', async () => {
+      // setup
+      const expected = JSON.stringify(data);
+
+      // act
+      await ws.publish(channel, data);
+
+      // assert
+      assert.callCount(emitSpy, 1);
+      assert.calledWith(emitSpy, channel, expected);
     });
   });
 });

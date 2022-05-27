@@ -40,7 +40,7 @@ export class WebsocketServer implements Publisher, Subscriber {
     this.subscriptions.clear();
   }
 
-  publish(_channel: string, _data: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  async publish(channel: string, data: any): Promise<void> {
+    this.io?.emit(channel, JSON.stringify(data));
   }
 }
