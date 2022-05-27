@@ -1,16 +1,23 @@
 import { describe } from 'mocha';
-import Sinon, { assert, SinonSpy, spy } from 'sinon';
+import Sinon, { assert, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { Server } from 'socket.io';
 import { WebsocketServer } from '../../src/communication/impl/websocket-server';
 import { Callback } from '../../src/communication/interfaces/subscriber';
+import { Logger } from '../../src/config/logger';
 
 describe('Websocket Server tests', () => {
   let io: Server;
   let ws: WebsocketServer;
+  let logger: Logger;
+  let errorStub: SinonStub;
 
   beforeEach(() => {
     io = new Server();
-    ws = new WebsocketServer();
+    logger = new Logger();
+
+    errorStub = stub(logger, 'error');
+    
+    ws = new WebsocketServer(logger);
     ws.initialize(io);
   });
 
@@ -51,6 +58,17 @@ describe('Websocket Server tests', () => {
       assert.callCount(onSpy, 1);
       assert.calledWith(onSpy, channel, callback);
     });
+
+    it('should log an error if not initialized', async () => {
+      // setup
+      ws = new WebsocketServer(logger);
+
+      // act
+      await ws.subscribe('test', () => {});
+
+      // assert
+      assert.callCount(errorStub, 1);
+    });
   });
 
   describe('unsubscribe', () => {
@@ -90,6 +108,17 @@ describe('Websocket Server tests', () => {
       // assert
       assert.callCount(removeListenerSpy, 0);
     });
+
+    it('should log an error if not initialized', async () => {
+      // setup
+      ws = new WebsocketServer(logger);
+
+      // act
+      await ws.unsubscribe('test');
+
+      // assert
+      assert.callCount(errorStub, 1);
+    });
   });
 
   describe('unsubscribeAll', () => {
@@ -128,6 +157,17 @@ describe('Websocket Server tests', () => {
       // assert
       assert.callCount(removeListenerSpy, 0);
     });
+
+    it('should log an error if not initialized', async () => {
+      // setup
+      ws = new WebsocketServer(logger);
+
+      // act
+      await ws.unsubscribeAll();
+
+      // assert
+      assert.callCount(errorStub, 1);
+    });
   });
 
   describe('publish', () => {
@@ -149,6 +189,17 @@ describe('Websocket Server tests', () => {
       // assert
       assert.callCount(emitSpy, 1);
       assert.calledWith(emitSpy, channel, expected);
+    });
+
+    it('should log an error if not initialized', async () => {
+      // setup
+      ws = new WebsocketServer(logger);
+
+      // act
+      await ws.publish(channel, data);
+
+      // assert
+      assert.callCount(errorStub, 1);
     });
   });
 });
