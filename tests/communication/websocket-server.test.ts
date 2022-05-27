@@ -1,5 +1,5 @@
 import { describe } from 'mocha';
-import Sinon, { assert, SinonStub, stub } from 'sinon';
+import Sinon, { assert, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { Server } from 'socket.io';
 import { expect } from 'chai';
 import { WebsocketServer } from '../../src/communication/impl/websocket-server';
@@ -20,10 +20,10 @@ describe('Websocket Server tests', () => {
   }); 
 
   describe('subscribe', () => {
-    let onStub: SinonStub;
+    let onSpy: SinonSpy;
 
     beforeEach(() => {
-      onStub = stub(io, 'on');
+      onSpy = stub(io, 'on');
     });
 
     it('should add a subscription', () => {
@@ -35,8 +35,8 @@ describe('Websocket Server tests', () => {
       ws.subscribe(channel, callback);
 
       // assert
-      assert.callCount(onStub, 1);
-      assert.calledWith(onStub, channel, callback);
+      assert.callCount(onSpy, 1);
+      assert.calledWith(onSpy, channel, callback);
     });
 
     it('should not add two handlers to a subscription', () => {
@@ -49,17 +49,85 @@ describe('Websocket Server tests', () => {
       ws.subscribe(channel, callback);
 
       // assert
-      assert.callCount(onStub, 1);
-      assert.calledWith(onStub, channel, callback);
+      assert.callCount(onSpy, 1);
+      assert.calledWith(onSpy, channel, callback);
     });
 
     describe('unsubscribe', () => {
-      it('should remove a subscription');
-      it('should do nothing if the subscription does not exist');
+      const channel = 'test';
+      let removeListenerSpy: SinonSpy;
+
+      beforeEach(() => {
+        removeListenerSpy = spy(io, 'removeListener');
+        ws.subscribe(channel, () => {});
+      });
+
+      it('should unsubscribe', () => {
+        // act
+        ws.unsubscribe(channel);
+
+        // assert
+        assert.callCount(removeListenerSpy, 1);
+        assert.calledWith(removeListenerSpy, channel);
+      });
+
+      it('should do nothing if the subscription does not exist', () => {
+        // act
+        ws.unsubscribe('bingbong');
+
+        // assert
+        assert.callCount(removeListenerSpy, 0);
+      });
+
+      it('should remove the subscription internally', () => {
+        // setup
+        ws.unsubscribe(channel);
+        removeListenerSpy.resetHistory();
+
+        // act
+        ws.unsubscribe(channel);
+
+        // assert
+        assert.callCount(removeListenerSpy, 0);
+      });
     });
 
     describe('unsubscribeAll', () => {
-      it('should remove all subscriptions');
+      const channels: string[] = [];
+      let removeListenerSpy: SinonSpy;
+
+      beforeEach(() => {
+        removeListenerSpy = spy(io, 'removeListener');
+
+        channels.push('sub1', 'sub2', 'sub3');
+
+        for (const channel of channels) {
+          ws.subscribe(channel, () => {});
+        }
+      });
+
+      it('should unsubscribe from all subscriptions', () => {
+        // act
+        ws.unsubscribeAll();
+
+        // assert
+        assert.callCount(removeListenerSpy, channels.length);
+        for (const channel of channels) {
+          assert.calledWith(removeListenerSpy, channel);
+        }
+      });
+
+      it('should remove all subscriptions internally', () => {
+        // setup
+        ws.unsubscribeAll();
+        removeListenerSpy.resetHistory();
+
+        // act
+        ws.unsubscribeAll();
+
+        // assert
+        assert.callCount(removeListenerSpy, 0);
+      });
     });
 
     describe('publish', () => {

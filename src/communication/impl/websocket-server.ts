@@ -21,12 +21,23 @@ export class WebsocketServer implements Publisher, Subscriber {
     this.subscriptions.set(channel, callback);
   }
 
-  unsubscribe(_channel: string): void {
-    throw new Error('Method not implemented.');
+  unsubscribe(channel: string): void {
+    const handler = this.subscriptions.get(channel);
+
+    if (!handler) {
+      return;
+    }
+
+    this.io?.removeListener(channel, handler);
+    this.subscriptions.delete(channel);
   }
 
   unsubscribeAll(): void {
-    throw new Error('Method not implemented.');
+    for (const [channel, handler] of this.subscriptions) {
+      this.io?.removeListener(channel, handler);
+    }
+
+    this.subscriptions.clear();
   }
 
   publish(_data: string): Promise<void> {
