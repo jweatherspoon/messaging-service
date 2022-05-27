@@ -26,27 +26,27 @@ describe('Websocket Server tests', () => {
       onSpy = stub(io, 'on');
     });
 
-    it('should add a subscription', () => {
+    it('should add a subscription', async () => {
       // setup
       const channel = 'channel';
       const callback: Callback = (_data, _error) => {};
 
       // act
-      ws.subscribe(channel, callback);
+      await ws.subscribe(channel, callback);
 
       // assert
       assert.callCount(onSpy, 1);
       assert.calledWith(onSpy, channel, callback);
     });
 
-    it('should not add two handlers to a subscription', () => {
+    it('should not add two handlers to a subscription', async () => {
       // setup
       const channel = 'channel';
       const callback: Callback = (_data, _error) => { };
 
       // act
-      ws.subscribe(channel, callback);
-      ws.subscribe(channel, callback);
+      await ws.subscribe(channel, callback);
+      await ws.subscribe(channel, callback);
 
       // assert
       assert.callCount(onSpy, 1);
@@ -62,30 +62,30 @@ describe('Websocket Server tests', () => {
         ws.subscribe(channel, () => {});
       });
 
-      it('should unsubscribe', () => {
+      it('should unsubscribe', async () => {
         // act
-        ws.unsubscribe(channel);
+        await ws.unsubscribe(channel);
 
         // assert
         assert.callCount(removeListenerSpy, 1);
         assert.calledWith(removeListenerSpy, channel);
       });
 
-      it('should do nothing if the subscription does not exist', () => {
+      it('should do nothing if the subscription does not exist', async () => {
         // act
-        ws.unsubscribe('bingbong');
+        await ws.unsubscribe('bingbong');
 
         // assert
         assert.callCount(removeListenerSpy, 0);
       });
 
-      it('should remove the subscription internally', () => {
+      it('should remove the subscription internally', async () => {
         // setup
-        ws.unsubscribe(channel);
+        await ws.unsubscribe(channel);
         removeListenerSpy.resetHistory();
 
         // act
-        ws.unsubscribe(channel);
+        await ws.unsubscribe(channel);
 
         // assert
         assert.callCount(removeListenerSpy, 0);
@@ -106,9 +106,9 @@ describe('Websocket Server tests', () => {
         }
       });
 
-      it('should unsubscribe from all subscriptions', () => {
+      it('should unsubscribe from all subscriptions', async () => {
         // act
-        ws.unsubscribeAll();
+        await ws.unsubscribeAll();
 
         // assert
         assert.callCount(removeListenerSpy, channels.length);
@@ -117,13 +117,13 @@ describe('Websocket Server tests', () => {
         }
       });
 
-      it('should remove all subscriptions internally', () => {
+      it('should remove all subscriptions internally', async () => {
         // setup
-        ws.unsubscribeAll();
+        await ws.unsubscribeAll();
         removeListenerSpy.resetHistory();
 
         // act
-        ws.unsubscribeAll();
+        await ws.unsubscribeAll();
 
         // assert
         assert.callCount(removeListenerSpy, 0);

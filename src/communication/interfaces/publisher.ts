@@ -1,3 +1,3 @@
 export interface Publisher {
-  publish(data: string): Promise<void>;
+  publish(channel: string, data: string): Promise<void>;
 }

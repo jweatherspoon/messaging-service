@@ -12,7 +12,7 @@ export class WebsocketServer implements Publisher, Subscriber {
     this.io = io;
   }
 
-  subscribe(channel: string, callback: Callback): void {
+  async subscribe(channel: string, callback: Callback): Promise<void> {
     if (this.subscriptions.has(channel)) {
       return;
     }
@@ -21,7 +21,7 @@ export class WebsocketServer implements Publisher, Subscriber {
     this.subscriptions.set(channel, callback);
   }
 
-  unsubscribe(channel: string): void {
+  async unsubscribe(channel: string): Promise<void> {
     const handler = this.subscriptions.get(channel);
 
     if (!handler) {
@@ -32,7 +32,7 @@ export class WebsocketServer implements Publisher, Subscriber {
     this.subscriptions.delete(channel);
   }
 
-  unsubscribeAll(): void {
+  async unsubscribeAll(): Promise<void> {
     for (const [channel, handler] of this.subscriptions) {
       this.io?.removeListener(channel, handler);
     }
@@ -40,7 +40,7 @@ export class WebsocketServer implements Publisher, Subscriber {
     this.subscriptions.clear();
   }
 
-  publish(_data: string): Promise<void> {
+  publish(_channel: string, _data: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
 }
