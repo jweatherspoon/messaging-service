@@ -53,12 +53,17 @@ describe('Websocket Server tests', () => {
       assert.calledWith(onStub, channel, callback);
     });
 
-    it('should throw an error if not initialized', () => {
-      // setup
-      io = new Server();
+    describe('unsubscribe', () => {
+      it('should remove a subscription');
+      it('should do nothing if the subscription does not exist');
+    });
 
-      // act
-      expect(ws.subscribe('', () => {})).to.throw();
+    describe('unsubscribeAll', () => {
+      it('should remove all subscriptions');
+    });
+
+    describe('publish', () => {
+      it('should publish the message');
     });
   });
 });
