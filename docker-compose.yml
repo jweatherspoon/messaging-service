@@ -1,0 +1,15 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672 
+    container_name: rmq
+  
+  # messaging-service:
+  #   build: '.'
+  #   ports:
+  #     - 7500:7500
+  #   container_name: 'messaging-service'
+  #   depends_on:
+  #     - rabbitmq
