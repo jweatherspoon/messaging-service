@@ -8,7 +8,11 @@ const main = async () => {
 
   try {
     const mq = ioc.get(MessageQueue);
-    await mq.subscribe('beans');
+
+    await mq.initializeConnection();
+    await mq.subscribe('beans', { topic: 'big-beans', routingKeys: {
+      candy: 'man'
+    } });
 
     await app.initialize();
   } catch (err) {
